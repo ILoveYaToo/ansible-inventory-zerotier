@@ -108,11 +108,11 @@ class InventoryModule(BaseInventoryPlugin):
                 host["hidden"] == False
                 and len(host["config"]["ipAssignments"]) > 0
                 and host["config"]["authorized"] == True
-            ):  
+            ):
                 # Get tags
                 # If tag does not resolve to anything in the zerotier tag database, we just do not add it...
                 for tag in host["config"]["tags"]:
-                #    # Check if both tag and enum is defined in network
+                    #    # Check if both tag and enum is defined in network
                     if (
                         tag[0] in zt_network_tags.keys()
                         and tag[1] in zt_network_tags[tag[0]]["enums"].keys()
@@ -127,17 +127,21 @@ class InventoryModule(BaseInventoryPlugin):
                         # Assign Child Group to Primary Group
                         self.inventory.add_child(zt_group_primary, zt_group_child)
                         # Create Host
-                        self.inventory.add_host(host=host["nodeId"],group=None)
+                        self.inventory.add_host(host=host["nodeId"], group=None)
                         # Assign Host to Child Group
                         self.inventory.add_child(zt_group_child, host["nodeId"])
 
                         # Set Host variables
-                        self.inventory.set_variable(host["nodeId"], "node_name", host["name"])
+                        self.inventory.set_variable(
+                            host["nodeId"], "node_name", host["name"]
+                        )
                         self.inventory.set_variable(
                             host["nodeId"], "description", host["description"]
                         )
                         self.inventory.set_variable(
-                            host["nodeId"], "ansible_host", host["config"]["ipAssignments"][0]
+                            host["nodeId"],
+                            "ansible_host",
+                            host["config"]["ipAssignments"][0],
                         )
 
     # Get hosts in specified ZT network
