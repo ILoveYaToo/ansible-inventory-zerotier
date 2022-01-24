@@ -80,7 +80,7 @@ class InventoryModule(BaseInventoryPlugin):
         zt_network_info = requests.get(
             zt_api_url + "/api/v1/network/" + zt_network_id, headers=headers
         )
-        if zt_network_info.status_code == requests.codes.ok:
+        if zt_network_info.status_code == 200:
             zt_api_response = zt_network_info.json()
             # Get tags in network
             zt_tags = self.zerotier_format_tags(
