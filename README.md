@@ -8,7 +8,7 @@ Still a WIP, improvements will come soon.
 This inventory plugin maps human readable tag names to group names in ansible.
 ZeroTier Device IDs are used to identify the host, and internal IPs are used by ansible to connect to the hosts.
 
-For example, if you have the following tag definition, host tagged with this combination will show up under the `servertype:ansiblecontroller` ansible group/child group.
+For example, if you have the following tag definition, hosts tagged with this combination will show up under the `servertype:ansiblecontroller` ansible group/child group.
 ```
 tag servertype
   id 1001
