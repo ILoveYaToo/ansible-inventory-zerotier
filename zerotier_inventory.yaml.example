@@ -1,0 +1,7 @@
+---
+#zerotier_inventory.yaml
+
+plugin: zerotier
+zt_api_url: "https://my.zerotier.com"
+zt_api_key: <zerotier api key>
+zt_network_id: <zerotier network id>
