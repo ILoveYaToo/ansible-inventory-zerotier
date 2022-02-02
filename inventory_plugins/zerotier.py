@@ -1,5 +1,6 @@
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.common.text.converters import to_native
 import requests
 
 
@@ -38,12 +39,12 @@ class InventoryModule(BaseInventoryPlugin):
             zt_api_url=self.zt_api_url,
             zt_api_key=self.zt_api_key,
             zt_network_id=self.zt_network_id,
-            zt_network_tags=self.zt_network_tags[2],
+            zt_network_tags=self.zt_network_tags,
         )
 
         # Convert zt_hosts and zt_network_tags into inventory
         self.zerotier_process_hosts(
-            zt_hosts=self.zt_hosts, zt_network_tags=self.zt_network_tags[2]
+            zt_hosts=self.zt_hosts, zt_network_tags=self.zt_network_tags
         )
 
     # Formats ZT tags in a queryable format
@@ -77,28 +78,35 @@ class InventoryModule(BaseInventoryPlugin):
             "Accept": "application/json",
             "Authorization": "bearer " + zt_api_key,
         }
-        zt_network_info = requests.get(
-            zt_api_url + "/api/v1/network/" + zt_network_id, headers=headers
-        )
-        if zt_network_info.status_code == 200:
-            zt_api_response = zt_network_info.json()
-            # Get tags in network
-            zt_tags = self.zerotier_format_tags(
-                zt_api_tag_response=zt_api_response["tagsByName"]
+        try:
+            zt_network_info_raw = requests.get(
+                zt_api_url + "/api/v1/network/" + zt_network_id,
+                headers=headers,
+                timeout=5,
             )
-            return (True, "Tags exist in this network", zt_tags)
-        # Return error based on ZT API docs
-        elif zt_network_info.status_code == 403:
-            return (
-                False,
-                "API Key does not have access to Zerotier Network ID " + zt_network_id,
-            )
-        # Return error based on ZT API docs
-        elif zt_network_info.status_code == 404:
-            return (False, "Zerotier Network ID " + zt_network_id + " Not Found")
-        # Catch all errors
-        else:
-            return (False, "Unknown Zerotier Network Error")
+            if zt_network_info_raw.status_code == 200:
+                zt_network_info = zt_network_info_raw.json()
+                # Get tags in network
+                zt_tags = self.zerotier_format_tags(
+                    zt_api_tag_response=zt_network_info["tagsByName"]
+                )
+                return zt_tags
+            # Return error based on ZT API docs
+            elif zt_network_info_raw.status_code == 403:
+                raise AnsibleError(
+                    "API Key does not have access to Zerotier Network ID %s"
+                    % to_native(zt_network_id)
+                )
+            # Return error based on ZT API docs
+            elif zt_network_info_raw.status_code == 404:
+                raise AnsibleError(
+                    "Zerotier Network ID %s not found" % to_native(zt_network_id)
+                )
+            # Catch all errors
+            else:
+                raise AnsibleError("Unknown ZeroTier Central API Error")
+        except Exception as e:
+            raise AnsibleError("Unknown ZeroTier Central API Error: %s" % to_native(e))
 
     # Convert ZT hosts into ansible inventory
     def zerotier_process_hosts(self, zt_hosts, zt_network_tags):
@@ -153,8 +161,33 @@ class InventoryModule(BaseInventoryPlugin):
             "Accept": "text/plain",
             "Authorization": "bearer " + zt_api_key,
         }
-        zt_network_members_raw = requests.get(
-            zt_api_url + "/api/v1/network/" + zt_network_id + "/member", headers=headers
-        )
-        zt_network_members = zt_network_members_raw.json()
-        return zt_network_members
+        try:
+            zt_network_members_raw = requests.get(
+                zt_api_url + "/api/v1/network/" + zt_network_id + "/member",
+                headers=headers,
+                timeout=5,
+            )
+            if zt_network_members_raw.status_code == 200:
+                zt_network_members = zt_network_members_raw.json()
+                return zt_network_members
+            elif zt_network_members_raw.status_code == 401:
+                raise AnsibleError(
+                    "Authorization required for access to Zerotier Network ID %s"
+                    % to_native(zt_network_id)
+                )
+            # Return error based on ZT API docs
+            elif zt_network_members_raw.status_code == 403:
+                raise AnsibleError(
+                    "API Key does not have access to Zerotier Network ID %s"
+                    % to_native(zt_network_id)
+                )
+            # Return error based on ZT API docs
+            elif zt_network_members_raw.status_code == 404:
+                raise AnsibleError(
+                    "Zerotier Network ID %s not found" % to_native(zt_network_id)
+                )
+            # Catch all errors
+            else:
+                raise AnsibleError("Unknown ZeroTier Central API Error")
+        except Exception as e:
+            raise AnsibleError("Unknown ZeroTier Central API Error: %s" % to_native(e))
