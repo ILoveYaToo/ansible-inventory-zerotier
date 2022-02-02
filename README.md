@@ -2,8 +2,6 @@
 
 Allows for a ZeroTier network to be used as an inventory source.
 
-Still a WIP, improvements will come soon.
-
 ## Design
 This inventory plugin maps human readable tag names to group names in ansible.
 ZeroTier Device IDs are used to identify the host, and internal IPs are used by ansible to connect to the hosts.
